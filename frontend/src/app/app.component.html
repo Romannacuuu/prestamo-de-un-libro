@@ -1,0 +1,138 @@
+<main>
+  <p class="marca"><img src="logo-libro.svg" alt="" width="48" height="48"> Biblioteca</p>
+  @if (sesion) {
+    <header class="barra">
+      <p>Hola, {{ sesion.nombre }}.</p>
+      <button type="button" class="secundario" (click)="salir()" [disabled]="ocupado">Salir</button>
+    </header>
+  }
+  <h1>Préstamo de un libro</h1>
+
+  @if (aviso) {
+    <p class="aviso" [class.ok]="aviso.tipo === 'ok'" [class.error]="aviso.tipo === 'error'" role="status">
+      {{ aviso.texto }}
+    </p>
+  }
+  @if (cargando) {
+    <p class="ayuda">Preparando la biblioteca…</p>
+  }
+
+  @if (!cargando && !sesion) {
+    <section class="paneles">
+      <p class="ayuda ancho">Para pedir al mismo tiempo, abrí esta página en otra pestaña e ingresá con otra cuenta.</p>
+
+      <form class="tarjeta" (ngSubmit)="crearCuenta()">
+        <h2>Crear cuenta</h2>
+        <p class="ayuda">La cuenta nueva es de cliente. Podés crear todas las que hagan falta.</p>
+        <label>Nombre <input name="nombre" [(ngModel)]="registro.nombre" autocomplete="name"></label>
+        <label>Correo <input name="correo" type="email" [(ngModel)]="registro.correo" autocomplete="email"></label>
+        <label>Contraseña <input name="contrasena" type="password" [(ngModel)]="registro.contrasena" autocomplete="new-password"></label>
+        <button type="submit" [disabled]="ocupado">Crear cuenta</button>
+      </form>
+
+      <form class="tarjeta" (ngSubmit)="entrar()">
+        <h2>Ingresar</h2>
+        <label>Correo <input name="correoIngreso" type="email" [(ngModel)]="ingreso.correo" autocomplete="username"></label>
+        <label>Contraseña <input name="claveIngreso" type="password" [(ngModel)]="ingreso.contrasena" autocomplete="current-password"></label>
+        <button type="submit" [disabled]="ocupado">Entrar</button>
+      </form>
+
+      <section class="tarjeta ancho">
+        <h2>Cuentas de ejemplo</h2>
+        <ul class="cuentas">
+          @for (cuenta of cuentas; track cuenta.correo) {
+            <li>
+              <strong>{{ cuenta.nombre }}</strong>
+              <span>{{ cuenta.rol }}</span>
+              <span>{{ cuenta.correo }}</span>
+              <span>{{ cuenta.clave }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+    </section>
+  }
+
+  @if (sesion?.rol === 'cliente') {
+    <section>
+      <h2>{{ titulo }}</h2>
+      <p class="autor">{{ autor }}</p>
+      <p class="stock">Copias totales: <strong>{{ copias.length || 5 }}</strong></p>
+      <p class="stock">Copias libres: <strong>{{ libres }}</strong></p>
+      <button type="button" class="accion" (click)="pedir()" [disabled]="ocupado">Pedir</button>
+      @if (mio) {
+        <div class="tarjeta prestamo">
+          <p>Tu copia: número <strong>{{ mio.copia }}</strong></p>
+          <p>Pedida: {{ fecha(mio.fechaPrestamo) }}</p>
+          <button type="button" class="accion" (click)="devolver()" [disabled]="ocupado">Devolver</button>
+        </div>
+      }
+    </section>
+  }
+
+  @if (sesion?.rol === 'administrador') {
+    <section>
+      <h2>Copias</h2>
+      <div class="lista">
+        <article class="item columnas cabecera">
+          <p>Número</p>
+          <p>Estado</p>
+          <p>Cliente</p>
+          <p>Fecha</p>
+        </article>
+        @for (copia of copias; track copia.numero) {
+          <article class="item columnas">
+            <p><span class="etiqueta">Número</span> {{ copia.numero }}</p>
+            <p><span class="etiqueta">Estado</span> {{ copia.estado }}</p>
+            <p><span class="etiqueta">Cliente</span> {{ detalle(copia.numero)?.cliente || '—' }}</p>
+            <p><span class="etiqueta">Fecha</span> {{ fecha(detalle(copia.numero)?.fechaPrestamo || null) }}</p>
+          </article>
+        }
+      </div>
+
+      <h2>Préstamos activos</h2>
+      <div class="lista">
+        @if (activos.length === 0) {
+          <p class="ayuda">No hay préstamos activos.</p>
+        } @else {
+        <article class="item columnas cabecera">
+          <p>Copia</p>
+          <p>Cliente</p>
+          <p>Fecha</p>
+          <p></p>
+        </article>
+        }
+        @for (prestamo of activos; track prestamo.id) {
+          <article class="item columnas">
+            <p><span class="etiqueta">Copia</span> {{ prestamo.copia }}</p>
+            <p><span class="etiqueta">Cliente</span> {{ prestamo.cliente }}</p>
+            <p><span class="etiqueta">Fecha</span> {{ fecha(prestamo.fechaPrestamo) }}</p>
+            <button type="button" (click)="devolverUno(prestamo.id)" [disabled]="ocupado">Devolver</button>
+          </article>
+        }
+      </div>
+
+      <h2>Historial de devueltos</h2>
+      <div class="lista">
+        @if (devueltos.length === 0) {
+          <p class="ayuda">Todavía no hay devoluciones.</p>
+        } @else {
+        <article class="item columnas cabecera">
+          <p>Copia</p>
+          <p>Cliente</p>
+          <p>Prestado</p>
+          <p>Devuelto</p>
+        </article>
+        }
+        @for (prestamo of devueltos; track prestamo.id) {
+          <article class="item columnas">
+            <p><span class="etiqueta">Copia</span> {{ prestamo.copia }}</p>
+            <p><span class="etiqueta">Cliente</span> {{ prestamo.cliente }}</p>
+            <p><span class="etiqueta">Prestado</span> {{ fecha(prestamo.fechaPrestamo) }}</p>
+            <p><span class="etiqueta">Devuelto</span> {{ fecha(prestamo.fechaDevolucion) }}</p>
+          </article>
+        }
+      </div>
+    </section>
+  }
+</main>

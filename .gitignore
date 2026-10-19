@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Caché de Firebase y de Angular
+.firebase/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Cloud Functions no forman parte de lo publicado
+functions/
+
+# Documentos del cliente: quedan en la carpeta local y no se suben
+Especificacion-cliente-prestamo-de-libros.md
+Especificacion-cliente-prestamo-de-libros.docx
+Plan-de-trabajo-cliente.md

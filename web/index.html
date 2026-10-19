@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Préstamo de un libro</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <main>
+    <p class="marca">Biblioteca</p>
+    <h1>Préstamo de un libro</h1>
+    <p id="aviso" class="aviso" role="status" hidden></p>
+
+    <section id="visitante">
+      <p class="ayuda">Para pedir al mismo tiempo, abrí esta página en otra pestaña e ingresá con otra cuenta.</p>
+      <h2>Crear cuenta</h2>
+      <form id="form-registro">
+        <label>Nombre <input name="nombre" autocomplete="name"></label>
+        <label>Correo <input name="correo" type="email" autocomplete="email"></label>
+        <label>Contraseña <input name="contrasena" type="password" autocomplete="new-password"></label>
+        <button type="submit">Crear cuenta</button>
+      </form>
+
+      <h2>Ingresar</h2>
+      <form id="form-ingreso">
+        <label>Correo <input name="correo" type="email" autocomplete="username"></label>
+        <label>Contraseña <input name="contrasena" type="password" autocomplete="current-password"></label>
+        <button type="submit">Entrar</button>
+      </form>
+    </section>
+
+    <section id="cliente" hidden>
+      <div class="barra">
+        <p id="saludo-cliente"></p>
+        <button type="button" id="salir-cliente">Salir</button>
+      </div>
+      <h2 id="titulo"></h2>
+      <p id="autor" class="autor"></p>
+      <p class="stock">Copias totales: <strong id="total"></strong></p>
+      <p class="stock">Copias libres: <strong id="libres"></strong></p>
+      <button type="button" id="pedir">Pedir</button>
+      <div id="mi-prestamo" class="prestamo" hidden>
+        <p>Tu copia: número <strong id="mi-copia"></strong></p>
+        <p>Pedida: <span id="mi-fecha"></span></p>
+        <button type="button" id="devolver">Devolver</button>
+      </div>
+    </section>
+
+    <section id="admin" hidden>
+      <div class="barra">
+        <p id="saludo-admin"></p>
+        <button type="button" id="salir-admin">Salir</button>
+      </div>
+      <h2>Copias</h2>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr><th>Número</th><th>Estado</th><th>Cliente</th><th>Fecha</th></tr>
+          </thead>
+          <tbody id="tabla-copias"></tbody>
+        </table>
+      </div>
+      <h2>Préstamos activos</h2>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr><th>Copia</th><th>Cliente</th><th>Fecha</th><th></th></tr>
+          </thead>
+          <tbody id="tabla-activos"></tbody>
+        </table>
+      </div>
+      <h2>Historial de devueltos</h2>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr><th>Copia</th><th>Cliente</th><th>Prestado</th><th>Devuelto</th></tr>
+          </thead>
+          <tbody id="tabla-devueltos"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

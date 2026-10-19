@@ -1,0 +1,31 @@
+# Un comando levanta la base, la API y la pantalla.
+# Los datos quedan en el volumen aunque se reinicien los contenedores.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: biblioteca
+      POSTGRES_PASSWORD: biblioteca
+      POSTGRES_DB: biblioteca
+    volumes:
+      - datos_biblioteca:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U biblioteca -d biblioteca"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+      - "8090:8090"
+    environment:
+      DATABASE_URL: postgresql://biblioteca:biblioteca@db:5432/biblioteca
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  datos_biblioteca:

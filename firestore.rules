@@ -1,0 +1,131 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function entro() {
+      return request.auth != null;
+    }
+
+    function usuario() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function esAdmin() {
+      return entro() && usuario().rol == 'administrador';
+    }
+
+    function esCliente() {
+      return entro() && usuario().rol == 'cliente';
+    }
+
+    function igualesSalvo(numero) {
+      return (numero == 1 || request.resource.data.c1 == resource.data.c1)
+        && (numero == 2 || request.resource.data.c2 == resource.data.c2)
+        && (numero == 3 || request.resource.data.c3 == resource.data.c3)
+        && (numero == 4 || request.resource.data.c4 == resource.data.c4)
+        && (numero == 5 || request.resource.data.c5 == resource.data.c5);
+    }
+
+    function pide(numero) {
+      return esCliente()
+        && usuario().prestamoActivoId == null
+        && igualesSalvo(numero)
+        && (numero != 1 || (resource.data.c1 == 'libre' && request.resource.data.c1 == 'prestada'))
+        && (numero != 2 || (resource.data.c2 == 'libre' && request.resource.data.c2 == 'prestada'))
+        && (numero != 3 || (resource.data.c3 == 'libre' && request.resource.data.c3 == 'prestada'))
+        && (numero != 4 || (resource.data.c4 == 'libre' && request.resource.data.c4 == 'prestada'))
+        && (numero != 5 || (resource.data.c5 == 'libre' && request.resource.data.c5 == 'prestada'));
+    }
+
+    function cambiaALibre(numero) {
+      return igualesSalvo(numero)
+        && (numero != 1 || (resource.data.c1 == 'prestada' && request.resource.data.c1 == 'libre'))
+        && (numero != 2 || (resource.data.c2 == 'prestada' && request.resource.data.c2 == 'libre'))
+        && (numero != 3 || (resource.data.c3 == 'prestada' && request.resource.data.c3 == 'libre'))
+        && (numero != 4 || (resource.data.c4 == 'prestada' && request.resource.data.c4 == 'libre'))
+        && (numero != 5 || (resource.data.c5 == 'prestada' && request.resource.data.c5 == 'libre'));
+    }
+
+    function devuelve(numero) {
+      return cambiaALibre(numero)
+        && usuario().prestamoActivoId is string
+        && get(/databases/$(database)/documents/prestamos/$(usuario().prestamoActivoId)).data.copia == numero;
+    }
+
+    match /biblioteca/stock {
+      allow read: if entro();
+      allow create: if entro()
+        && request.resource.data.c1 == 'libre'
+        && request.resource.data.c2 == 'libre'
+        && request.resource.data.c3 == 'libre'
+        && request.resource.data.c4 == 'libre'
+        && request.resource.data.c5 == 'libre';
+      allow update: if pide(1) || pide(2) || pide(3) || pide(4) || pide(5)
+        || devuelve(1) || devuelve(2) || devuelve(3) || devuelve(4) || devuelve(5)
+        || (esAdmin() && (cambiaALibre(1) || cambiaALibre(2) || cambiaALibre(3) || cambiaALibre(4) || cambiaALibre(5)));
+    }
+
+    match /usuarios/{id} {
+      allow read: if entro() && (request.auth.uid == id || esAdmin());
+      allow create: if request.auth.uid == id
+        && request.resource.data.correo == request.auth.token.email
+        && request.resource.data.prestamoActivoId == null
+        && request.resource.data.nombre is string
+        && (
+          (request.resource.data.rol == 'cliente' && request.auth.token.email != 'admin@biblioteca.local')
+          || (request.resource.data.rol == 'administrador' && request.auth.token.email == 'admin@biblioteca.local')
+        );
+      allow update: if (
+          request.auth.uid == id
+          && request.resource.data.nombre == resource.data.nombre
+          && request.resource.data.correo == resource.data.correo
+          && request.resource.data.rol == resource.data.rol
+          && (
+            (resource.data.prestamoActivoId == null && request.resource.data.prestamoActivoId is string)
+            || (resource.data.prestamoActivoId is string && request.resource.data.prestamoActivoId == null)
+          )
+        ) || (
+          esAdmin()
+          && request.resource.data.nombre == resource.data.nombre
+          && request.resource.data.correo == resource.data.correo
+          && request.resource.data.rol == resource.data.rol
+          && request.resource.data.prestamoActivoId == null
+        );
+    }
+
+    function prestamoNuevoValido() {
+      return esCliente()
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.estado == 'activo'
+        && request.resource.data.fechaDevolucion == null
+        && request.resource.data.copia is int
+        && request.resource.data.copia >= 1
+        && request.resource.data.copia <= 5
+        && request.resource.data.cliente == usuario().nombre
+        && usuario().prestamoActivoId == null;
+    }
+
+    function devolucionValida() {
+      return resource.data.estado == 'activo'
+        && request.resource.data.estado == 'devuelto'
+        && request.resource.data.copia == resource.data.copia
+        && request.resource.data.usuarioId == resource.data.usuarioId
+        && request.resource.data.cliente == resource.data.cliente
+        && request.resource.data.fechaPrestamo == resource.data.fechaPrestamo
+        && request.resource.data.fechaDevolucion is timestamp
+        && (esAdmin() || resource.data.usuarioId == request.auth.uid);
+    }
+
+    match /prestamos/{id} {
+      allow read: if entro() && resource.data.usuarioId == request.auth.uid;
+      allow create: if prestamoNuevoValido();
+      allow update: if devolucionValida();
+    }
+
+    match /panel/{id} {
+      allow read: if esAdmin();
+      allow create: if prestamoNuevoValido();
+      allow update: if devolucionValida();
+    }
+  }
+}
