@@ -1,6 +1,6 @@
 # Préstamo de un libro
 
-Trabajo del programador. La pantalla publicada está en https://prestamo-principito-rom.web.app.
+Trabajo del programador. La pantalla publicada está en https://prestamo-de-un-libro.web.app.
 
 | Documento | Contenido |
 |---|---|

@@ -4,7 +4,7 @@ Esta carpeta es el trabajo de quien programa. La pantalla publicada es la de Ang
 
 Los documentos del cliente no están en este repositorio.
 
-Pantalla publicada: https://prestamo-principito-rom.web.app
+Pantalla publicada: https://prestamo-de-un-libro.web.app
 
 | Documento | Para qué |
 |---|---|

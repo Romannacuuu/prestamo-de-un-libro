@@ -4,7 +4,7 @@ No hay que instalar nada. La pantalla ya está en internet y anda en el celular.
 
 ## Dirección
 
-https://prestamo-principito-rom.web.app
+https://prestamo-de-un-libro.web.app
 
 Abrila en el navegador. En el teléfono se acomoda sola: los botones ocupan el ancho y cada dato del administrador lleva su etiqueta.
 

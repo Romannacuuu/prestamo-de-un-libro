@@ -4,7 +4,7 @@ El cliente pidió el resultado. Esta nota dice cómo quedó la pantalla publicad
 
 ## Lectura de un minuto
 
-La pantalla es Angular y está en https://prestamo-principito-rom.web.app. Los datos están en Firestore, en el proyecto `prestamo-principito-rom`. El ingreso es el de Firebase, con correo y contraseña. No hay un servidor propio: el plan gratuito de Firebase no incluye Cloud Functions, así que la regla de la última copia corre como una transacción de la base, en el documento donde están las cinco copias.
+La pantalla es Angular y está en https://prestamo-de-un-libro.web.app. Los datos están en Firestore, en el proyecto `prestamo-principito-rom`. El ingreso es el de Firebase, con correo y contraseña. No hay un servidor propio: el plan gratuito de Firebase no incluye Cloud Functions, así que la regla de la última copia corre como una transacción de la base, en el documento donde están las cinco copias.
 
 La pantalla no decide el número de copia. Pide la transacción, y la base acepta una sola escritura de ese documento. Si Ana y Luis aprietan **Pedir** juntos sobre la última copia, uno confirma y el otro se vuelve a ejecutar cuando el primero ya guardó. El segundo ve que no queda ninguna libre.
 
