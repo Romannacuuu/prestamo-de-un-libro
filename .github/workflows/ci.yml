@@ -1,0 +1,91 @@
+name: Integración continua
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  typescript:
+    name: TypeScript, Cucumber y cobertura
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run test:coverage
+      - run: npm run test:e2e
+
+  python:
+    name: Reglas Python y recorrido de la API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: biblioteca
+          POSTGRES_PASSWORD: biblioteca
+          POSTGRES_DB: biblioteca
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U biblioteca -d biblioteca"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: pytest --cov=app.reglas --cov=app.claves --cov=app.mensajes --cov-report=term-missing --cov-fail-under=90
+      - name: Recorrido contra PostgreSQL
+        env:
+          DATABASE_URL: postgresql://biblioteca:biblioteca@localhost:5432/biblioteca
+          PROBAR_REINICIO: "0"
+        run: |
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          python -m http.server 8090 --directory web &
+          for intento in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/ && break
+            sleep 1
+          done
+          python pruebas/recorrer.py
+
+  frontend:
+    name: Pantalla Angular
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: browser-actions/setup-chrome@v1
+      - name: Pruebas de componente
+        working-directory: frontend
+        run: |
+          npm ci
+          export CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium)"
+          npx ng test --watch=false --browsers=ChromeHeadless --progress=false
+
+  navegador:
+    name: Recorrido en el navegador
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser

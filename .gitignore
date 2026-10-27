@@ -1,6 +1,16 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+blob-report/
 
 # Caché de Firebase y de Angular
 .firebase/

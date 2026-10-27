@@ -15,6 +15,7 @@ from psycopg_pool import ConnectionPool
 
 from app.claves import hash_clave, nuevo_token, verificar_clave
 from app import mensajes
+from app.reglas import Regla, numero_a_prestar, validar_registro
 
 log = logging.getLogger("biblioteca")
 log.setLevel(logging.INFO)
@@ -37,15 +38,6 @@ DEMOS = (
 _HASH_DE_RELLENO = hash_clave("relleno")
 
 pool: ConnectionPool | None = None
-
-
-class Regla(Exception):
-    """Una regla de negocio. No es un fallo del servidor."""
-
-    def __init__(self, mensaje: str, codigo: int = 400) -> None:
-        super().__init__(mensaje)
-        self.mensaje = mensaje
-        self.codigo = codigo
 
 
 def abrir() -> None:
@@ -160,11 +152,7 @@ def preparar() -> None:
 
 
 def registrar(nombre: str | None, correo: str | None, contrasena: str | None) -> dict:
-    nombre_limpio = (nombre or "").strip()
-    correo_limpio = (correo or "").strip().lower()
-    if not nombre_limpio or not correo_limpio or not contrasena:
-        raise Regla(mensajes.FALTAN_DATOS)
-
+    nombre_limpio, correo_limpio = validar_registro(nombre, correo, contrasena)
     clave_hash = hash_clave(contrasena)
     try:
         with pool.connection() as conn:
@@ -265,8 +253,8 @@ def pedir(usuario_id: int) -> dict:
 
     1. Bloquea la fila del usuario, para que dos clics suyos no creen dos préstamos.
     2. Si ya tiene uno activo, rechaza.
-    3. Bloquea la primera copia libre. Si otro hilo la está llevando, este espera.
-    4. Cuando el otro confirma, esta copia ya no está libre. Si no queda otra, rechaza.
+    3. Bloquea las copias libres. `numero_a_prestar` elige la de número más bajo.
+    4. Si otro hilo se llevó la última, esta transacción espera y después la rechaza.
     5. Marca la copia y crea el préstamo. Las dos cosas se confirman juntas.
 
     No hay un candado de todo el servidor: el resto de los pedidos sigue en paralelo.
@@ -287,24 +275,22 @@ def pedir(usuario_id: int) -> dict:
                     """,
                     (usuario_id,),
                 ).fetchone()
-                if activo:
-                    log.info("pedir: usuario=%s ya tiene un préstamo (%s)", usuario_id, hilo)
-                    raise Regla(mensajes.YA_TIENE)
-
-                copia = conn.execute(
+                libres = conn.execute(
                     """
                     SELECT numero FROM copias
                     WHERE estado = 'libre'
                     ORDER BY numero
                     FOR UPDATE
-                    LIMIT 1
                     """
-                ).fetchone()
-                if not copia:
+                ).fetchall()
+                if activo:
+                    log.info("pedir: usuario=%s ya tiene un préstamo (%s)", usuario_id, hilo)
+                if not libres:
                     log.info("pedir: usuario=%s sin copia libre (%s)", usuario_id, hilo)
-                    raise Regla(mensajes.SIN_STOCK)
-
-                numero = copia["numero"]
+                numero = numero_a_prestar(
+                    [fila["numero"] for fila in libres],
+                    activo is not None,
+                )
                 conn.execute(
                     "UPDATE copias SET estado = 'prestada' WHERE numero = %s",
                     (numero,),

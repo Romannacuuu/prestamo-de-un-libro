@@ -27,6 +27,7 @@ SESION = "Tenés que iniciar sesión."
 CORREO = "Ese correo ya está registrado."
 INGRESO = "Correo o contraseña incorrectos."
 FALTAN = "Faltan datos."
+CORTA = "La contraseña tiene que tener al menos 6 caracteres."
 NADA = "No tenés una copia para devolver."
 
 fallas: list[str] = []
@@ -150,6 +151,16 @@ def main() -> None:
     verificar(codigo == 400 and cuerpo.get("mensaje") == CORREO, "correo repetido no duplica")
     codigo, cuerpo = llamar("POST", "/registro", cuerpo={"nombre": "Sin clave", "correo": correo})
     verificar(codigo == 400 and cuerpo.get("mensaje") == FALTAN, "faltan datos no crea nada")
+    codigo, cuerpo = llamar(
+        "POST",
+        "/registro",
+        cuerpo={
+            "nombre": "Corta",
+            "correo": f"corta.{uuid.uuid4().hex[:6]}@biblioteca.local",
+            "contrasena": "12345",
+        },
+    )
+    verificar(codigo == 400 and cuerpo.get("mensaje") == CORTA, "la contraseña corta no crea la cuenta")
     codigo, cuerpo = llamar("POST", "/registro", cuerpo={"nombre": "X", "correo": f"nuevo.{uuid.uuid4().hex[:6]}@biblioteca.local", "contrasena": "clave123"})
     verificar("clave123" not in json.dumps(cuerpo) and "pbkdf2" not in json.dumps(cuerpo), "la contraseña no se muestra")
 
