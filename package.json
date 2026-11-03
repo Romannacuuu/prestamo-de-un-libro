@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "ws": "^8.22.1"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11.3.0",
@@ -27,6 +28,7 @@
     "@types/express": "^4.17.23",
     "@types/node": "^24.0.0",
     "@types/supertest": "^6.0.3",
+    "@types/ws": "^8.18.2",
     "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.28.0",
     "prettier": "^3.6.2",

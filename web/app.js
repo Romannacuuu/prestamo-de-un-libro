@@ -280,3 +280,34 @@ entrarSegunRol().catch((error) => {
   mostrarVisitante();
   mostrarAviso("error", error.message);
 });
+
+// Inicializar conexión WebSocket
+const ws = new WebSocket('ws://localhost:8080');
+
+ws.onopen = () => {
+    console.log('Conectado al servidor WebSocket');
+    // Ejemplo de envío al conectar
+    // ws.send(JSON.stringify({ evento: 'conexion', mensaje: 'Hola desde app.js' }));
+};
+
+ws.onmessage = (evento) => {
+    const datos = JSON.parse(evento.data);
+    console.log('Mensaje recibido en tiempo real:', datos);
+    
+    // Acá podés llamar a una función para actualizar el DOM
+    // Ejemplo: actualizarCatalogo();
+};
+
+ws.onclose = () => {
+    console.log('Desconectado del WebSocket. Intentando reconectar...');
+    setTimeout(() => {
+        window.location.reload(); 
+    }, 3000);
+};
+
+// Función de ayuda para enviar mensajes desde otras partes de app.js
+function enviarMensajeWS(mensaje) {
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(mensaje));
+    }
+}

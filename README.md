@@ -33,3 +33,5 @@ El proyecto está configurado para desplegarse mediante contenedores, lo que gar
 3. Levantar los servicios ejecutando:
    ```bash
    docker-compose up --build
+   ```
+4.  Consultar la documentación interna en el directorio /docs para detalles adicionales sobre la ejecución de las suites de prueba[cite: 1].
